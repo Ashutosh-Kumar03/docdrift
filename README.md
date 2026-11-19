@@ -9,7 +9,7 @@ Put this in `.github/workflows/docdrift.yml` of any repo (see `examples/demo-rep
 
     - uses: actions/checkout@v4
       with: {fetch-depth: 0}
-    - uses: YOUR_GITHUB_USERNAME/docdrift@main
+    - uses: Ashutosh-Kumar03/docdrift@main
       with:
         api-key: ${{ secrets.DOCDRIFT_API_KEY }}   # optional, rules-only without it
 
