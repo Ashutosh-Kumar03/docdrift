@@ -1,0 +1,16 @@
+# Save this file in YOUR demo repo as:  .github/workflows/docdrift.yml
+name: docdrift
+on: [pull_request]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  docdrift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: YOUR_GITHUB_USERNAME/docdrift@main
+        with:
+          api-key: ${{ secrets.DOCDRIFT_API_KEY }}   # optional; leave the secret out to run rules only

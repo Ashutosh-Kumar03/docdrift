@@ -1,0 +1,59 @@
+name: "docdrift"
+description: "Comment on a pull request when it makes the documentation wrong"
+branding:
+  icon: "file-text"
+  color: "blue"
+inputs:
+  base:
+    description: "Base ref to compare against (the caller must checkout with fetch-depth: 0)"
+    default: "origin/${{ github.base_ref }}"
+  docs-path:
+    description: "Folder with docs that live OUTSIDE this repo (e.g. a checked-out docs repo). Empty = docs in this repo."
+    default: ""
+  api-key:
+    description: "API key for an OpenAI-compatible provider (Groq, OpenRouter...). Empty = rules only, no LLM."
+    default: ""
+  base-url:
+    description: "OpenAI-compatible base URL"
+    default: "https://api.groq.com/openai/v1"
+  model:
+    description: "Open-weight model name"
+    default: "openai/gpt-oss-20b"
+  fail-on:
+    description: "Fail the check on findings of this level or higher: high | medium | low | never"
+    default: "never"
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install docdrift
+      shell: bash
+      run: pip install "${{ github.action_path }}" certifi
+    - name: Check docs against this change
+      id: run
+      shell: bash
+      env:
+        DOCDRIFT_API_KEY: ${{ inputs.api-key }}
+        DOCDRIFT_BASE_URL: ${{ inputs.base-url }}
+        DOCDRIFT_MODEL: ${{ inputs.model }}
+        DOCS_PATH: ${{ inputs.docs-path }}
+      run: |
+        set +e
+        ARGS=""
+        [ -n "$DOCDRIFT_API_KEY" ] && ARGS="$ARGS --llm"
+        [ -n "$DOCS_PATH" ] && ARGS="$ARGS --docs-dir $DOCS_PATH"
+        docdrift check --base "${{ inputs.base }}" --head HEAD --format markdown \
+          --fail-on "${{ inputs.fail-on }}" $ARGS > "$RUNNER_TEMP/docdrift.md"
+        echo "code=$?" >> "$GITHUB_OUTPUT"
+        cat "$RUNNER_TEMP/docdrift.md" >> "$GITHUB_STEP_SUMMARY"
+    - name: Comment on the pull request
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: docdrift
+        path: ${{ runner.temp }}/docdrift.md
+    - name: Fail if findings reach the chosen level
+      if: steps.run.outputs.code != '0'
+      shell: bash
+      run: exit 1

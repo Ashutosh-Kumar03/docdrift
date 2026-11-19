@@ -1,0 +1,16 @@
+[project]
+name = "docdrift"
+version = "0.1.0"
+description = "CI check that flags documentation made wrong by a code change"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+docdrift = "docdrift.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["docdrift"]
